@@ -40,6 +40,30 @@ class Email(models.Model):
         verbose_name_plural = 'Emails'
 
 
+class BaseDatos(models.Model):
+    nombre = models.CharField(max_length=200)
+    
+    
+    def __unicode__(self):
+        return self.nombre
+    
+    class Meta:
+        verbose_name = 'Base de datos de emails'
+        verbose_name_plural = 'Bases de datos de emails'
+
+
+class EmailBaseDatos(models.Model):
+    basedatos = models.ForeignKey(BaseDatos)
+    email = models.ForeignKey(Email)
+    
+    def __unicode__(self):
+        return '%s -> %s'% (self.basedatos.nombre,self.email.email)
+
+    class Meta:
+        verbose_name = 'Email en base de datos'
+        verbose_name_plural = 'Emails en base de datos'
+    
+
 class EmailTemplate(models.Model):
     nombre = models.CharField(max_length=200,null=True,blank=True)
     zipFile = models.FileField(upload_to=os.path.join(os.path.dirname(os.path.realpath(__file__)),'templates') + '/adjuntos/')
@@ -78,7 +102,7 @@ class EmailTemplate(models.Model):
     def attachedFiles(self):
         path = os.path.join(os.path.dirname(os.path.realpath(__file__)),'templates') + '/adjuntos/'
         zipfilename = path + os.path.basename(self.zipFile.url)
-        pathfile = path +'/zipfile/'+ os.path.basename(self.zipFile.url) + '/'
+        pathfile = path +'zipfile/'+ os.path.basename(self.zipFile.url) + '/'
         return [pathfile + filename for (filename,content) in fileiterator(zipfilename)]
         
     @property    
@@ -94,7 +118,7 @@ class EmailTemplate(models.Model):
     def htmlContent(self):
         soup = BeautifulSoup(self.htmlContentOuter)
         images = soup.body.find_all('img')
-        for i in range (0,images.__len__()-1):
+        for i in range (0,images.__len__()):
             if not images[i]['src'].startswith('cid:'):
                 images[i]['src']= 'cid:%s' % os.path.basename(images[i]['src'])
         html_content = soup.body.decode_contents(formatter='html')
@@ -111,13 +135,14 @@ class EmailTemplate(models.Model):
 class Delivery(models.Model):
     fecha = models.DateTimeField()
     plantilla = models.ForeignKey(EmailTemplate)
+    basedatos = models.ForeignKey(BaseDatos)
 
     def __unicode__(self):
         return '%s %s' % (str(self.fecha), self.plantilla.nombre)
 
     def save(self, *args, **kwargs):
         super(Delivery, self).save(*args, **kwargs)
-        emails  = Email.objects.all()
+        emails  = [edb.email for edb in self.basedatos.emailbasedatos_set.all()]
         for email in emails:
             dq = DeliveryQueue(email=email)
             self.deliveryqueue_set.add(dq)

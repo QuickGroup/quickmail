@@ -6,7 +6,9 @@ admin.autodiscover()
 
 urlpatterns = patterns('',
     # Examples:
-    url(r'^GuardarMail.record$', 'emails.views.GuardarMailView', name='GuardarMailView'),
+    url(r'^qm$', 'emails.views.qmView', name='qm'),
+    url(r'^ADJUNTOS/(?P<path>.*)$', 'django.views.static.serve',
+       {'document_root': os.path.join(os.path.dirname(os.path.realpath(__file__)),'emails/templates') + '/adjuntos/'}),
 
     # Uncomment the admin/doc line below to enable admin documentation:
     # url(r'^admin/doc/', include('django.contrib.admindocs.urls')),

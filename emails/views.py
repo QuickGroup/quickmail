@@ -10,47 +10,18 @@ from django.views.decorators.csrf import csrf_exempt
 
 
 @csrf_exempt
-def GuardarMailView(request):
-    fecha = request.POST['fecha_nacimiento'].split('/')
-    email = request.POST['email']
-    nombre = request.POST['nombre']
-    apellido = request.POST['apellido']
-    apellido2 = request.POST['apellido2']
-    telefono = request.POST['telefono']
-    rut = request.POST['rut']
-    fecha_nacimiento = '%s-%s-%s' % (fecha[2],fecha[1],fecha[0] )
-    direccion = request.POST['direccion']
-    comuna = request.POST['comuna']
-    categoria = request.POST['categoria']
-    aporte = request.POST['aporte']
-    aporteEspecifico = True if request.POST['aporteEspecifico']=='SI' else False
-    deporte = request.POST['deporte']
-    medioPago = request.POST['medioPago']
-    recibirRetribucion = True if request.POST['recibirRetribucion']=='SI' else False
+def qmView(request):
+    m = request.GET['m']
+    e = request.GET['e']
     
-    em = Email(email=email,
-               nombre=nombre,
-               apellido=apellido,
-               apellido2=apellido2,
-               telefono=telefono,
-               rut=rut,
-               fecha_nacimiento=fecha_nacimiento,
-               direccion=direccion,
-               comuna=comuna,
-               categoria=categoria,
-               aporte=aporte,
-               aporteEspecifico=aporteEspecifico,
-               deporte=deporte,
-               medioPago=medioPago,
-               recibirRetribucion=recibirRetribucion
-               )
-    em.save()
+    plantilla = EmailTemplate.objects.get(pk=m)
+    header_html = '<html><body>'
+    footer_html = '</body></html>'
+    html_content = '%s%s%s' % (header_html,plantilla.htmlContent.replace('cid:', 'ADJUNTOS/zipfile/' + os.path.basename(plantilla.zipFile.path) + '/img/'),footer_html)
+    email = Email.objects.get(pk=e)
+    nombre = '%s %s' % (email.nombre,email.apellido)
     
-    obj = {'respuesta':'OK'}
-
-    callback= request.POST['callback']
-    json = callback +  '(' + simplejson.dumps(obj) + ')'
-    response = render_to_response('jsonList.html',{'json':json},content_type='application/json', mimetype='application/json')
+    response = render_to_response('jsonList.html',{'json':html_content},content_type='application/json', mimetype='text/html')
     response["Access-Control-Allow-Origin"] = "*"
     response["Access-Control-Allow-Methods"] = "POST, GET, OPTIONS, PUT, DELETE"
     response["Access-Control-Max-Age"] = "1000"

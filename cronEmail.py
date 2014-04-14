@@ -18,22 +18,23 @@ def main():
     DeliveryQueue.objects.filter(enviado=True).delete()
     queue = DeliveryQueue.objects.exclude(enviado=True)
     for q in queue:
-        link = 'http://admin.quickmail.cl?m=%s&e=%s' % (str(q.delivery.plantilla.pk),str(q.email.pk))
+        link = 'http://admin.quickmail.cl/qm?m=%s&e=%s' % (str(q.delivery.plantilla.pk),str(q.email.pk))
         nombre = '%s %s' % (q.email.nombre,q.email.apellido)
         msg = EmailMultiAlternatives('%s %s' % (nombre,q.subject), q.plainContent, q.from_email, [q.email.email])
-        header_html = '<html><body><h2>Estimado: %s</h2><p>Si no puede ver el contenido de este mensaje haga click en el link <a href="%s">%s</a></p><br/>'% (nombre,link,link)
-        disclaimer = u'Este correo electrónico fue enviado a %s. Si no quiere recibir estos emails, haga clic en el link <a href="%s">%s</a> \
-                        Este e-mail ha sido enviado por la plataforma QuickMail.' % (q.email.email,link,link)
+        header_html = '<html><body><h2>Estimado: %s</h2><p>Si no puede ver el contenido de este mensaje haga click en el link <a href="%s">link</a></p><br/>'% (nombre,link)
+        disclaimer = u'Este correo electrónico fue enviado a %s. Si no quiere recibir estos emails, haga clic en el link <a href="%s">link</a> \
+                        Este e-mail ha sido enviado por la plataforma <a href="http://www.quickmail.cl">QuickMail</a>' % (q.email.email,link)
         footer_html = '</body></footer>'
         msg.attach_alternative('%s%s%s%s' % (header_html,q.htmlContent,disclaimer,footer_html), "text/html")
         msg.mixed_subtype = 'related'
         for f in q.attachedFiles:
             try:
-                fp = open(f, 'rb')
-                msg_img = MIMEImage(fp.read())
-                fp.close()
-                msg_img.add_header('Content-ID', '<{}>'.format(os.path.basename(f)))
-                msg.attach(msg_img)
+                if q.htmlContent.__contains__(os.path.basename(f)):
+                    fp = open(f, 'rb')
+                    msg_img = MIMEImage(fp.read())
+                    fp.close()
+                    msg_img.add_header('Content-ID', '<{}>'.format(os.path.basename(f)))
+                    msg.attach(msg_img)
             except:
                 pass
         try:
