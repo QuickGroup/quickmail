@@ -11,6 +11,7 @@ from django.contrib import messages
 from django.utils.translation import ugettext_lazy as _
 from django.contrib.admin.sites import AlreadyRegistered
 from django.db.models.loading import get_models, get_app
+from emails.utils import TypeManager
 
 class CustomExportMixin(ExportMixin):
     def export_action(self, request, *args, **kwargs):
@@ -59,11 +60,15 @@ class CustomImportMixin(ImportMixin):
             data = import_file.read()
             data = data.replace(';',',')
             if not input_format.is_binary() and self.from_encoding:
-                data = unicode(data, self.from_encoding).encode('utf-8')
+                try:
+                    data = unicode(data, self.from_encoding).encode('utf-8')
+                except:
+                    typeManager = TypeManager()
+                    data = typeManager.force_unicode(data, strings_only=True).encode('utf-8')
             dataset = input_format.create_dataset(data)
 
             resource.import_data(dataset, dry_run=False,
-                                 raise_errors=True)
+                                 raise_errors=False)
 
             success_message = _('Import finished')
             messages.success(request, success_message)
@@ -109,7 +114,11 @@ class CustomImportMixin(ImportMixin):
                 data = uploaded_import_file.read()
                 data = data.replace(';',',')
                 if not input_format.is_binary() and self.from_encoding:
-                    data = unicode(data, self.from_encoding).encode('utf-8')
+                    try:
+                        data = unicode(data, self.from_encoding).encode('utf-8')
+                    except:
+                        typeManager = TypeManager()
+                        data = typeManager.force_unicode(data, strings_only=True).encode('utf-8')
                 dataset = input_format.create_dataset(data)
                 result = resource.import_data(dataset, dry_run=True,
                                               raise_errors=False)
