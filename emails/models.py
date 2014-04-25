@@ -43,6 +43,13 @@ class Email(models.Model):
 class BaseDatos(models.Model):
     nombre = models.CharField(max_length=200)
     
+    def save(self, *args, **kwargs):
+        super(BaseDatos, self).save(*args, **kwargs)
+        if self.emailbasedatos_set.count()<1:
+            newEmails = Email.objects.exclude(email__in=[email.email.email for email in EmailBaseDatos.objects.all()])
+            for newEmail in newEmails:
+                emailbd = EmailBaseDatos(email=newEmail)
+                self.emailbasedatos_set.add(emailbd)
     
     def __unicode__(self):
         return self.nombre
@@ -122,6 +129,12 @@ class EmailTemplate(models.Model):
             if not images[i]['src'].startswith('cid:'):
                 images[i]['src']= 'cid:%s' % os.path.basename(images[i]['src'])
         html_content = soup.body.decode_contents(formatter='html')
+        
+        links = soup.body.find_all('a')
+        for i in range (0,links.__len__()):
+            if not links[i]['href'].startswith('http://admin.quickmail.cl/q?m=%s&l=' % str(self.pk)):
+                links[i]['href'] = 'http://admin.quickmail.cl/q?m=%s&l=%s' % (str(self.pk),links[i]['href'])
+        html_content = soup.body.decode_contents(formatter='html')
         return html_content
 
     def __unicode__(self):
@@ -131,6 +144,17 @@ class EmailTemplate(models.Model):
         verbose_name = 'Plantilla de Email'
         verbose_name_plural = 'Plantillas de Email'
         
+class LinkCounter(models.Model):
+    plantilla = models.ForeignKey(EmailTemplate)
+    link = models.URLField(max_length=1000)
+    clicks = models.FloatField()
+    
+    def __unicode__(self):
+        return '%s | %s' % (self.plantilla.nombre,self.link)
+
+    class Meta:
+        verbose_name = 'Contador de clicks por link'
+        verbose_name_plural = 'Contadores de clicks por link'
         
 class Delivery(models.Model):
     fecha = models.DateTimeField()

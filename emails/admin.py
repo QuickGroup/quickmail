@@ -157,8 +157,19 @@ class EmailAdmin(CustomImportExportModelAdmin):
     list_display=['rut','email','nombre','apellido','apellido2']
     pass
     
+class LinkCounterAdmin(CustomImportExportModelAdmin):
+    list_display=['plantilla','link','clicks']
+    pass
+
+class EmailBaseDatosInline(admin.TabularInline):
+    model = EmailBaseDatos
+
+class BaseDatosAdmin(CustomImportExportModelAdmin):
+    inlines = [EmailBaseDatosInline]
 
 admin.site.register(Email,EmailAdmin)
+admin.site.register(LinkCounter,LinkCounterAdmin)
+admin.site.register(BaseDatos,BaseDatosAdmin)
 
 def autoregister(*app_list):
     

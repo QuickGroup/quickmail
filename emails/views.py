@@ -6,7 +6,7 @@ import simplejson
 import urllib2
 import urllib
 from django.views.decorators.csrf import csrf_exempt
-
+from django.shortcuts import redirect
 
 
 @csrf_exempt
@@ -28,3 +28,20 @@ def qmView(request):
     response["Access-Control-Allow-Headers"] = "*"
     return response
     
+@csrf_exempt
+def linkView(request):
+    l = request.GET['l']
+    m = request.GET['m']
+    
+    plantilla = EmailTemplate.objects.get(pk=m)
+    
+    linkCounterMatch = LinkCounter.objects.filter(plantilla=plantilla,link=l)[:1]
+    if linkCounterMatch.count()>0:
+        linkCounter = linkCounterMatch.get()
+        linkCounter.clicks+=1
+        linkCounter.save()
+    else:
+        linkCounter = LinkCounter(plantilla=plantilla,link=l,clicks=1)
+        linkCounter.save()
+    
+    return redirect(l)
