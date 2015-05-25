@@ -119,7 +119,10 @@ class CustomImportMixin(ImportMixin):
                     except:
                         typeManager = TypeManager()
                         data = typeManager.force_unicode(data, strings_only=True).encode('utf-8')
-                dataset = input_format.create_dataset(data)
+                try:
+                    dataset = input_format.create_dataset(data)
+                except:
+                    pass
                 result = resource.import_data(dataset, dry_run=True,
                                               raise_errors=False)
 
